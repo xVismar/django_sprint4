@@ -1,6 +1,5 @@
-from django.contrib import admin
-
 from .models import Category, Post, Location
+from django.contrib import admin
 
 admin.site.empty_value_display = 'Не задано'
 
@@ -36,6 +35,7 @@ class LocationAdmin(BaseAdmin):
     list_editable = (
         'is_published',
     )
+
 
 class PostAdmin(admin.ModelAdmin):
     list_display = (

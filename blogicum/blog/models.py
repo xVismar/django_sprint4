@@ -1,10 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.template.defaultfilters import truncatewords
-from django.db import models
-
-from core.models import BaseModel, TPdModel
 
 from .querysets import PostQuerySet, CategoryQuerySet
+from core.models import BaseModel, TPdModel
+from django.db import models
 
 
 User = get_user_model()
@@ -85,3 +84,7 @@ class Location(BaseModel):
 
     def __str__(self):
         return self.name
+
+
+class Commentary(BaseModel):
+    pass

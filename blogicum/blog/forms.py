@@ -1,22 +1,20 @@
-from django import forms
-from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
-from django.contrib.auth import get_user_model
-from .validators import real_age
-
 from .models import Post, Category, Commentary
+from django import forms
 
 
 class CommentForm(forms.ModelForm):
 
     class Meta:
         model = Commentary
+        fields = '__all__'
 
 
 class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
+        fields = '__all__'
+        exclude = ('author',)
 
     def clean(self):
         pass
@@ -41,3 +39,4 @@ class CategoryForm(forms.ModelForm):
 
     class Meta:
         model = Category
+        fields = '__all__'

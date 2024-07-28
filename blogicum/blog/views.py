@@ -1,18 +1,21 @@
 from blog.models import Category, Post
 
 from django.http import HttpResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.mixins import UserPassesTestMixin, OnlyAuthorMixin
+
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
+from core.mixins import OnlyAuthorMixin
 
 from django.urls import reverse_lazy
-from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
+from django.http import request
+
 from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView
 )
 
+
+from .forms import PostForm, CommentForm, CategoryForm
 
 DISP_LIMIT = 10
 
@@ -29,23 +32,22 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
-    success_url = reverse_lazy('blog:profile/', request.POST.user)
+  
+
 
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
 
 
-
-class PostUpdateView(OnlyAuthorMixin, UpdateView, LoginRequiredMixin):
-    model = Birthday
-    form_class = BirthdayForm
-
-
-
-class PostDeleteView(LoginRequiredMixin, DeleteView, OnlyAuthorMixin):
+class PostUpdateView(OnlyAuthorMixin, UpdateView):
     model = Post
-    success_url = reverse_lazy('birthday:list')
+    form_class = PostForm
+
+
+class PostDeleteView(OnlyAuthorMixin, DeleteView):
+    model = Post
+    success_url = reverse_lazy('blog:index')
 
 
 class PostDetailView(DetailView):
@@ -60,27 +62,28 @@ class PostDetailView(DetailView):
         return context
 
 
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    pass
 
 
+class CommentEditView(LoginRequiredMixin, UpdateView,):
+    pass
 
 
-
-def post_detail(request, id):
-    context = {'post': get_object_or_404(Post.posts(), pk=id)}
-    template = 'blog/detail.html'
-    return render(request, template, context)
+class CommentDeleteView(LoginRequiredMixin, DeleteView):
+    pass
 
 
-def category_posts(request, category_slug):
+class CategoryListView(ListView):
+    model = Category
+    queryset = Post.posts().select_related('category')
+    ordering = '-pub_date'
+    paginate_by = DISP_LIMIT
+    template_name = 'blog/category.html'
 
-    category = get_object_or_404(
-        Category.objects.published(),
-        slug=category_slug
-    )
-    post = Post.objects.select_related('category').filter(
-        category=category).check_pub_time()
-
-    context = {'category': category, 'post_list': post}
-    template = 'blog/category.html'
-    return render(request, template, context)
-
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['category'] = (
+            self.objects.filter(slug=category_slug)
+        )
+        return context
