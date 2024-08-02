@@ -1,38 +1,37 @@
-from .models import Post, Category, Commentary
+
+from .models import Post, Category, Comment
 from django import forms
 
 
-class CommentForm(forms.ModelForm):
+class AddCommentForm(forms.ModelForm):
 
     class Meta:
-        model = Commentary
-        fields = '__all__'
+        model = Comment
+        fields = ('text',)
+        # widgets = {
 
 
-class PostForm(forms.ModelForm):
+        #     'author': forms.HiddenInput(),
+        #     'created_at': forms.SplitHiddenDateTimeWidget(),
+        #     'post': forms.HiddenInput()}
+
+
+class CreatePostForm(forms.ModelForm):
 
     class Meta:
         model = Post
         fields = '__all__'
-        exclude = ('author',)
+        exclude = ('comments',)
+        widgets = {
+            'author': forms.HiddenInput(),
+            'is_published': forms.HiddenInput(),
+        }
 
-    def clean(self):
-        pass
-        # super().clean()
-        # title = self.cleaned_data['title']
-        # last_name = self.cleaned_data['last_name']
-        # if f'{first_name} {last_name}' in BEATLES:
-        #     send_mail(
-        #         subject='Another Beatles member',
-        #         message=f'{first_name} {last_name} пытался опубликовать запись!',
-        #         from_email='birthday_form@acme.not',
-        #         recipient_list=['admin@acme.not'],
-        #         fail_silently=True,
-        #     )
+class PostDetailForm(forms.ModelForm):
 
-        #     raise ValidationError(
-        #         'Мы тоже любим Битлз, но введите, пожалуйста, настоящее имя!'
-        #     )
+    class Meta:
+        model = Post
+        fields = ('title', 'text', 'location', 'category', 'image',)
 
 
 class CategoryForm(forms.ModelForm):

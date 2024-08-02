@@ -1,12 +1,42 @@
 from django.contrib.auth import get_user_model
 from django.template.defaultfilters import truncatewords
-
+from django.urls import reverse
 from .querysets import PostQuerySet, CategoryQuerySet
 from core.models import BaseModel, TPdModel
 from django.db import models
-
+from django.utils import timezone
+from django.db.models.constraints import UniqueConstraint
 
 User = get_user_model()
+
+
+class Comment(models.Model):
+
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='comment_authors',
+        verbose_name='Автор комментария',
+    )
+
+    post = models.ForeignKey(
+        'Post',
+        on_delete=models.CASCADE,
+        related_name='post',
+    )
+    text = models.TextField(verbose_name='Текст комментария', blank=True)
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания комментария',
+        help_text='Время создания комментария.'
+    )
+
+    class Meta:
+        verbose_name = 'комментарии'
+        verbose_name_plural = 'Комментарии'
+        ordering = ('created_at',)
 
 
 class Post(TPdModel):
@@ -16,8 +46,7 @@ class Post(TPdModel):
         User,
         on_delete=models.CASCADE,
         related_name='authors',
-        verbose_name='Автор публикации'
-
+        verbose_name='Автор публикации',
     )
 
     location = models.ForeignKey(
@@ -37,8 +66,14 @@ class Post(TPdModel):
         verbose_name='Категория'
     )
 
-    image = models.ImageField('Фото', upload_to='birthdays_images', blank=True)
-    objects = PostQuerySet.as_manager()
+    comments = models.ForeignKey(
+        Comment,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='comments'
+    )
+    image = models.ImageField('Фото', upload_to='media/img', blank=True)
 
     class Meta:
         verbose_name = 'публикация'
@@ -48,9 +83,8 @@ class Post(TPdModel):
     def short_text(self):
         return truncatewords(self.text, 10)
 
-    @classmethod
-    def posts(cls):
-        return cls.objects.filter(category__is_published=True).check_pub_time()
+    def get_absolute_url(self):
+        return reverse('blog:profile', kwargs={'pk': self.pk})
 
 
 class Category(TPdModel):
@@ -63,8 +97,6 @@ class Category(TPdModel):
         help_text='Идентификатор страницы для URL; разрешены символы латиницы,'
         ' цифры, дефис и подчёркивание.'
     )
-
-    objects = CategoryQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'категория'
@@ -84,7 +116,3 @@ class Location(BaseModel):
 
     def __str__(self):
         return self.name
-
-
-class Commentary(BaseModel):
-    pass
