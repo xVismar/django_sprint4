@@ -26,5 +26,5 @@ class BaseModel(models.Model):
                 return self.name
             elif self.post:
                 return self.post
-        except:
+        except AttributeError:
             return self.title
