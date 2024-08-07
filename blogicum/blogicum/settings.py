@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-kux%zbxq4=kwg!&^7hbig057e7&ll2gn5spe(hujfkj&!n!jmx'
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -114,8 +114,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
 
 MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
+
+CSRF_FAILURE_VIEW = 'pages.views.csrf_failure'
 
 LOGIN_REDIRECT_URL = 'blog:index'
-LOGIN_URL = 'login'
 
-CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
+LOGIN_URL = 'users:login'

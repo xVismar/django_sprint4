@@ -1,5 +1,6 @@
-from .models import Category, Post, Location
 from django.contrib import admin
+
+from .models import Category, Comment, Location, Post
 
 admin.site.empty_value_display = 'Не задано'
 
@@ -18,23 +19,15 @@ class BaseAdmin(admin.ModelAdmin):
 class CategoryAdmin(BaseAdmin):
     list_display = (
         'title',
+        'slug',
         'is_published',
     )
 
-    list_editable = (
-        'is_published',
-    )
-
-
-class LocationAdmin(BaseAdmin):
-    list_display = (
-        'name',
-        'is_published',
-    )
-
-    list_editable = (
-        'is_published',
-    )
+    list_editable = ('is_published',)
+    list_filter = ('title',)
+    list_display_links = ('title',)
+    search_fields = ('title',)
+    prepopulated_fields = {'slug': ('title',)}
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -46,7 +39,8 @@ class PostAdmin(admin.ModelAdmin):
         'location',
         'is_published',
         'title',
-        'short_text'
+        'short_text',
+        'image',
     )
 
     list_editable = (
@@ -54,6 +48,7 @@ class PostAdmin(admin.ModelAdmin):
         'category',
         'location',
         'pub_date',
+        'image',
     )
 
     list_filter = (
@@ -62,9 +57,64 @@ class PostAdmin(admin.ModelAdmin):
         'location',
     )
 
-    list_display_links = ('title',)
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(is_published=True)
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
 
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Location, LocationAdmin)
+class CommentInline(admin.TabularInline):
+    model = Post
+    extra = 1
+
+
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        'author',
+        'created_at',
+        'post',
+        'text',
+        'is_published',
+    )
+
+    list_filter = (
+        'post',
+        'author',
+        'created_at',
+    )
+    list_editable = (
+        'is_published',
+    )
+
+    list_display_links = (
+        'author',
+        'post',
+    )
+
+    list_display_linkssearch_fields = (
+        'text',
+        'author',
+        'post',
+    )
+
+    date_hierarchy = 'created_at'
+
+
+class LocationAdmin(BaseAdmin):
+    list_display = (
+        'name',
+        'is_published',
+    )
+
+    list_filter = ('name',)
+    search_fields = ('name',)
+
+
 admin.site.register(Post, PostAdmin)
+admin.site.register(Category, CategoryAdmin)
+admin.site.register(Comment, CommentAdmin)
+admin.site.register(Location, LocationAdmin)
