@@ -16,6 +16,7 @@ class BaseAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(Category)
 class CategoryAdmin(BaseAdmin):
     list_display = (
         'title',
@@ -30,6 +31,7 @@ class CategoryAdmin(BaseAdmin):
     prepopulated_fields = {'slug': ('title',)}
 
 
+@admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = (
         'author',
@@ -72,6 +74,7 @@ class CommentInline(admin.TabularInline):
     extra = 1
 
 
+@admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     list_display = (
         'author',
@@ -104,6 +107,7 @@ class CommentAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
 
 
+@admin.register(Location)
 class LocationAdmin(BaseAdmin):
     list_display = (
         'name',
@@ -112,9 +116,3 @@ class LocationAdmin(BaseAdmin):
 
     list_filter = ('name',)
     search_fields = ('name',)
-
-
-admin.site.register(Post, PostAdmin)
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Comment, CommentAdmin)
-admin.site.register(Location, LocationAdmin)
