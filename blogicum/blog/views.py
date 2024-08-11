@@ -1,7 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
-from django.urls import reverse, reverse_lazy
-from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
@@ -86,4 +85,4 @@ class CommentEditView(UrlLoginMixin, CommentMixin, UpdateView):
 
 
 class CommentDeleteView(UrlLoginMixin, CommentMixin, DeleteView):
-    pk_url_kwarg = 'comment_id'
+    pass

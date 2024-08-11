@@ -1,22 +1,11 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Count
-from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
-from django.views.generic.detail import SingleObjectTemplateResponseMixin
-from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from .forms import CreateCommentForm, CreatePostForm
 from .models import Category, Comment, Post
-
-
-class CreateUpdateView(
-        SingleObjectTemplateResponseMixin, ModelFormMixin, ProcessFormView):
-    model = Post
-    template_name = 'blog/create.html'
-    form_class = CreatePostForm
-    pk_url_kwarg = 'post_id'
 
 
 class PostBaseMixin:
@@ -72,9 +61,9 @@ class PostCategoryAuthorQuerysetMixin:
         if hasattr(self, 'pk_url_kwawrg'):
             if self.pk_url_kwarg == 'post_id':
                 queryset = queryset.filter(
-                        category__is_published=True,
-                        is_published=True,
-                        pub_date__lte=timezone.now())
+                    category__is_published=True,
+                    is_published=True,
+                    pub_date__lte=timezone.now())
 
             if self.pk_url_kwarg == 'comment_id':
                 queryset = Comment.objects.filter(pk=self.kwargs['comment_id'])
@@ -104,7 +93,6 @@ class PostCategoryAuthorQuerysetMixin:
 class ListingMixin:
     model = Post
     paginate_by = 10
-
 
 
 class CategoryGetMixin:

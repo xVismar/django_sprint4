@@ -1,8 +1,7 @@
 from django.urls import path
-from django.db.models import Count
-from . import views
+
 import users.views as user_views
-from .models import Comment
+from . import views
 
 app_name = 'blog'
 
