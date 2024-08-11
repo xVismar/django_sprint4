@@ -1,28 +1,21 @@
+from blog.mixins import ListingMixin, PostCategoryAuthorQuerysetMixin
+from blog.models import User
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import ListView, UpdateView
 
-from blog.mixins import ListingMixin
-from blog.models import User
 
-
-class ProfileView(ListingMixin, ListView):
+class ProfileView(ListingMixin, PostCategoryAuthorQuerysetMixin, ListView):
     template_name = 'blog/profile.html'
+    slug_url_kwarg = 'username'
 
-    def get_queryset(self):
-        return super().get_queryset().filter(
-            author__username=self.kwargs['username']
-        )
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['profile'] = get_object_or_404(
-            User.objects,
-            username=self.kwargs['username']
-        )
-
-        return context
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            profile=get_object_or_404(
+                User.objects,
+                username=self.kwargs[self.slug_url_kwarg]))
 
 
 class EditProfileView(LoginRequiredMixin, UpdateView):
@@ -38,5 +31,5 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
     def get_object(self):
         return get_object_or_404(User.objects, username=self.request.user)
 
-    def get_success_url(self, *args, **kwargs):
+    def get_success_url(self):
         return reverse('blog:profile', kwargs={'username': self.request.user})

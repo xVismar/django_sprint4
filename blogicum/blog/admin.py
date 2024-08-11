@@ -41,7 +41,7 @@ class PostAdmin(admin.ModelAdmin):
         'location',
         'is_published',
         'title',
-        'short_text',
+        'text',
         'image',
     )
 
@@ -81,16 +81,12 @@ class CommentAdmin(admin.ModelAdmin):
         'created_at',
         'post',
         'text',
-        'is_published',
     )
 
     list_filter = (
         'post',
         'author',
         'created_at',
-    )
-    list_editable = (
-        'is_published',
     )
 
     list_display_links = (

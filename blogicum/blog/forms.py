@@ -9,6 +9,7 @@ class CreatePostForm(forms.ModelForm):
         model = Post
         exclude = (
             'author',
+            'is_published',
         )
 
         widgets = {

@@ -1,21 +1,17 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.template.defaultfilters import truncatewords
 from django.urls import reverse
 from django.utils import timezone
-
-from .querysets import PostQuerySet
 
 User = get_user_model()
 
 
 class PublishedModel(models.Model):
-    """Базовая абстрактная модель."""
-
     is_published = models.BooleanField(
         default=True,
         verbose_name='Опубликовано',
-        help_text='Снимите галочку, чтобы скрыть публикацию или категорию.'
+        help_text='Снимите галочку, чтобы скрыть публикацию или категорию.',
+        db_index=True
     )
 
     created_at = models.DateTimeField(
@@ -26,13 +22,11 @@ class PublishedModel(models.Model):
 
     class Meta:
         abstract = True
-        verbose_name = 'Базовая модель'
 
 
 class Category(PublishedModel):
-
     title = models.CharField(
-        max_length=256,
+        max_length=64,
         verbose_name='Заголовок'
     )
 
@@ -43,7 +37,8 @@ class Category(PublishedModel):
         unique=True,
         verbose_name='Идентификатор',
         help_text='Идентификатор страницы для URL; разрешены символы латиницы,'
-                  ' цифры, дефис и подчёркивание.'
+                  ' цифры, дефис и подчёркивание.',
+        db_index=True
     )
 
     class Meta:
@@ -52,7 +47,7 @@ class Category(PublishedModel):
         ordering = ('title',)
 
     def __str__(self):
-        return self.title
+        return f'{self.title}'.ljust(15)[:15]
 
 
 class Location(PublishedModel):
@@ -67,16 +62,16 @@ class Location(PublishedModel):
         ordering = ('name',)
 
     def __str__(self):
-        return self.name
+        return f'{self.name}'.ljust(15)[:15]
 
 
-class Comment(PublishedModel):
-
+class Comment(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='author_comments',
+        related_name='comments',
         verbose_name='Автор комментария',
+        db_index=True
     )
 
     post = models.ForeignKey(
@@ -84,14 +79,24 @@ class Comment(PublishedModel):
         on_delete=models.CASCADE,
         related_name='comments',
         verbose_name='Публикация',
+        db_index=True
     )
 
     text = models.TextField(verbose_name='Текст комментария')
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Добавлено',
+        help_text='Время создания комментария.'
+    )
 
     class Meta:
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'
         ordering = ('created_at',)
+
+    def get_absolute_url(self):
+        return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})
 
 
 class Post(PublishedModel):
@@ -106,8 +111,9 @@ class Post(PublishedModel):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='author_posts',
+        related_name='posts',
         verbose_name='Автор публикации',
+        db_index=True
     )
 
     pub_date = models.DateTimeField(
@@ -115,14 +121,15 @@ class Post(PublishedModel):
         default=timezone.now,
         verbose_name='Дата и время публикации',
         help_text='Если установить дату и время в будущем — можно делать'
-                  ' отложенные публикации.'
+                  ' отложенные публикации.',
+        db_index=True
     )
 
     location = models.ForeignKey(
         Location,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='location_posts',
+        related_name='posts',
         verbose_name='Местоположение'
     )
 
@@ -130,8 +137,9 @@ class Post(PublishedModel):
         Category,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='categories_posts',
-        verbose_name='Категория'
+        related_name='posts',
+        verbose_name='Категория',
+        db_index=True
     )
 
     image = models.ImageField(
@@ -141,19 +149,13 @@ class Post(PublishedModel):
         verbose_name='Изображение'
     )
 
-    objects = PostQuerySet.as_manager()
-
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
         ordering = ('-pub_date',)
 
-    def short_text(self):
-        """Метод для модели поста, чтобы 'обрезать' текст поста в админке"""
-        return truncatewords(self.text, 10)
-
     def get_absolute_url(self):
-        return reverse('blog:post_detail', args=self.pk)
+        return reverse('blog:post_detail', kwargs={'post_id': self.pk})
 
     def __str__(self):
-        return self.title
+        return f'{self.title}'.ljust(15)[:15]
