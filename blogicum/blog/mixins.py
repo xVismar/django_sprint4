@@ -33,6 +33,7 @@ class UserIsAuthorMixin(UserPassesTestMixin):
                 Post.objects,
                 pk=self.kwargs[self.pk_url_kwarg])), **kwargs)
 
+
 class CommentMixin:
     model = Comment
     template_name = 'blog/comment.html'
