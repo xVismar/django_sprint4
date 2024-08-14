@@ -42,7 +42,7 @@ class Category(PublishedModel):
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
-        ordering = ['title']
+        ordering = ('title',)
 
     def __str__(self):
         return f'{self.title[:15]}'
@@ -57,7 +57,7 @@ class Location(PublishedModel):
     class Meta:
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
-        ordering = ['name']
+        ordering = ('name',)
 
     def __str__(self):
         return f'{self.name[:15]}'
@@ -110,7 +110,7 @@ class Post(PublishedModel):
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
-        ordering = ['-pub_date']
+        ordering = ('-pub_date',)
         default_related_name = 'posts'
 
     def __str__(self):
@@ -124,7 +124,7 @@ class Comment(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='comments',
+
         verbose_name='Автор комментария',
     )
 
@@ -146,4 +146,5 @@ class Comment(models.Model):
     class Meta:
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'
-        ordering = ['created_at']
+        default_related_name = 'comments'
+        ordering = ('created_at',)

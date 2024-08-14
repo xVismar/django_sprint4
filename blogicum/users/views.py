@@ -1,5 +1,5 @@
 from blog.models import Post, User
-from blog.views import post_category_profile_queryset
+from blog.views import get_posts
 
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -13,14 +13,17 @@ class ProfileView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        username = self.kwargs['username']
-        return post_category_profile_queryset(self, username=username)
+        return get_posts(
+            Post.objects,
+            username=self.kwargs[self.slug_url_kwarg],
+            is_profile=True
+        )
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             profile=get_object_or_404(
-                User.objects,
-                username=self.kwargs[self.slug_url_kwarg])
+                User.objects, username=self.kwargs[self.slug_url_kwarg]),
+            **kwargs
         )
 
 

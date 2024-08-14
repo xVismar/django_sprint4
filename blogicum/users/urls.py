@@ -22,7 +22,7 @@ urlpatterns = [
              success_url=reverse_lazy('users:password_reset_complete')),
          name='password_reset_confirm',
          ),
-    path('profile/<username>/',
+    path('profile/<str:username>/',
          views.ProfileView.as_view(),
          name='profile'
          ),
