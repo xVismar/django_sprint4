@@ -13,16 +13,18 @@ class ProfileView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
+        if self.request.user.username == self.kwargs[self.slug_url_kwarg]:
+            return get_posts(username=self.kwargs[self.slug_url_kwarg])
+
         return get_posts(
-            Post.objects,
-            username=self.kwargs[self.slug_url_kwarg],
-            is_profile=True
+            filter_author=True,
+            username=self.kwargs[self.slug_url_kwarg]
         )
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             profile=get_object_or_404(
-                User.objects, username=self.kwargs[self.slug_url_kwarg]),
+                User, username=self.kwargs[self.slug_url_kwarg]),
             **kwargs
         )
 
@@ -37,7 +39,7 @@ class EditProfileView(UpdateView):
         'last_name',
     ]
 
-    def get_object(self):
+    def get_object(self, queryset=None):
         return get_object_or_404(
             User.objects,
             username=self.request.user.username
