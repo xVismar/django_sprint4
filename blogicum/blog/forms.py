@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Comment, Post
+from .models import Comment, Post, User
 
 
 class CreatePostForm(forms.ModelForm):
@@ -23,3 +23,15 @@ class CreateCommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ('text',)
+
+
+class EditUserProfileForm(forms.ModelForm):
+
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+        )

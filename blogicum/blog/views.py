@@ -7,15 +7,17 @@ from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView
 )
 
-from .forms import CreateCommentForm
+from .forms import CreateCommentForm, EditUserProfileForm
 from .mixins import CommentMixin, PostBaseMixin, UserIsPostAuthorMixin
-from .models import Comment, Post, Category
-
+from .models import Category, Comment, Post, User
 
 PAGINATE_BY = 10
 
 
-def get_posts(posts=Post.objects, filter_published=True, annotate=True):
+def get_posts(
+    posts=Post.objects, filter_published=True, annotate=True,
+    filter_related=False
+):
 
     if filter_published:
         posts = posts.filter(
@@ -24,16 +26,13 @@ def get_posts(posts=Post.objects, filter_published=True, annotate=True):
             pub_date__lte=timezone.now()
         )
 
-    if not filter_published:
-        posts = posts.select_related('author')
+    if filter_related:
+        posts = posts.select_related('author', 'category', 'location')
 
     if annotate:
         posts = posts.annotate(
             comment_count=Count('comments')
         ).order_by(*Post._meta.ordering)
-
-    if not annotate and not filter_published:
-        posts = posts
 
     return posts
 
@@ -78,14 +77,11 @@ class PostDetailView(DetailView):
     pk_url_kwarg = 'post_id'
 
     def get_object(self, queryset=None):
-        post = get_object_or_404(get_posts(
-            filter_published=False,
-            annotate=False),
-            pk=self.kwargs[self.pk_url_kwarg])
+        post = get_object_or_404(Post, pk=self.kwargs[self.pk_url_kwarg])
 
         if post.author != self.request.user:
             return get_object_or_404(
-                get_posts(),
+                get_posts(annotate=False),
                 pk=self.kwargs[self.pk_url_kwarg]
             )
 
@@ -147,3 +143,49 @@ class CommentEditView(LoginRequiredMixin, CommentMixin, UpdateView):
 
 class CommentDeleteView(CommentMixin, DeleteView):
     pass
+
+
+class ProfileView(ListView):
+    template_name = 'blog/profile.html'
+    slug_url_kwarg = 'username'
+    model = Post
+    paginate_by = PAGINATE_BY
+
+    def get_author(self):
+        return get_object_or_404(
+            User,
+            username=self.kwargs[self.slug_url_kwarg]
+        )
+
+    def get_queryset(self):
+        author_posts = get_posts(
+            annotate=False,
+            filter_related=True,
+            filter_published=False
+        )
+
+        if self.request.user.username != self.get_author().username:
+            author_posts = get_posts(posts=author_posts)
+        author_posts = get_posts(posts=author_posts, filter_published=False)
+
+        return author_posts.filter(
+            author__username=self.get_author().username
+        )
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            profile=self.get_author(),
+            **kwargs
+        )
+
+
+class EditProfileView(LoginRequiredMixin, UpdateView):
+    model = User
+    template_name = 'blog/user.html'
+    form_class = EditUserProfileForm
+
+    def get_object(self):
+        return self.request.user
+
+    def get_success_url(self):
+        return reverse('blog:profile', args=[self.request.user.username])

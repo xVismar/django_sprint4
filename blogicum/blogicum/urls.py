@@ -13,7 +13,6 @@ urlpatterns = [
     path('auth/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
     path('pages/', include('pages.urls', namespace='pages')),
-    path('', include('users.urls', namespace='users')),
     path('auth/registration/',
          CreateView.as_view(
              form_class=UserCreationForm,
