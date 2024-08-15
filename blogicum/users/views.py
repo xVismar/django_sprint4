@@ -14,17 +14,17 @@ class ProfileView(ListView):
 
     def get_queryset(self):
         if self.request.user.username == self.kwargs[self.slug_url_kwarg]:
-            return get_posts(username=self.kwargs[self.slug_url_kwarg])
+            posts = get_posts(filter_author=True, filter_published=False)
+        else:
+            posts = get_posts(filter_author=True)
 
-        return get_posts(
-            filter_author=True,
-            username=self.kwargs[self.slug_url_kwarg]
-        )
+        return posts.filter(author__username=self.kwargs[self.slug_url_kwarg])
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             profile=get_object_or_404(
-                User, username=self.kwargs[self.slug_url_kwarg]),
+                User,
+                username=self.kwargs[self.slug_url_kwarg]),
             **kwargs
         )
 

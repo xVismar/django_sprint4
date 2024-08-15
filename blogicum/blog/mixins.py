@@ -2,7 +2,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 
-
 from .forms import CreateCommentForm, CreatePostForm
 from .models import Comment, Post
 
@@ -27,9 +26,7 @@ class UserIsPostAuthorMixin(LoginRequiredMixin, UserPassesTestMixin):
         return super().get_context_data(
             form=CreatePostForm(instance=get_object_or_404(
                 Post.objects,
-                pk=self.kwargs[self.pk_url_kwarg]
-            )
-            ),
+                pk=self.kwargs[self.pk_url_kwarg])),
             **kwargs
         )
 
@@ -41,8 +38,7 @@ class CommentMixin:
     pk_url_kwarg = 'comment_id'
 
     def dispatch(self, request, *args, **kwargs):
-        post = self.get_object()
-        if post.author != self.request.user:
+        if self.get_object().author != self.request.user:
             return redirect(self.get_success_url())
         return super().dispatch(request, *args, **kwargs)
 
