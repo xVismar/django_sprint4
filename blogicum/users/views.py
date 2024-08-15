@@ -14,9 +14,9 @@ class ProfileView(ListView):
 
     def get_queryset(self):
         if self.request.user.username == self.kwargs[self.slug_url_kwarg]:
-            posts = get_posts(filter_author=True, filter_published=False)
+            posts = get_posts(filter_published=False)
         else:
-            posts = get_posts(filter_author=True)
+            posts = get_posts()
 
         return posts.filter(author__username=self.kwargs[self.slug_url_kwarg])
 

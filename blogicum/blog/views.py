@@ -1,6 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
-from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -10,52 +9,33 @@ from django.views.generic import (
 
 from .forms import CreateCommentForm
 from .mixins import CommentMixin, PostBaseMixin, UserIsPostAuthorMixin
-from .models import Comment, Post
+from .models import Comment, Post, Category
 
 
 PAGINATE_BY = 10
 
 
-def get_posts(
-    posts=Post.objects, filter_published=True, filter_category=False,
-    filter_author=False, annotate=True
-):
+def get_posts(posts=Post.objects, filter_published=True, annotate=True):
 
-    if filter_category:
-        return posts.select_related('category').filter(
+    if filter_published:
+        posts = posts.filter(
             is_published=True,
             category__is_published=True,
             pub_date__lte=timezone.now()
-        ).annotate(comment_count=Count('comments')
-                   ).order_by(*Post._meta.ordering)
-
-    if filter_author:
-        if not filter_published:
-            return posts.select_related('author').annotate(
-                comment_count=Count('comments')
-            ).order_by(*Post._meta.ordering)
-
-        return posts.select_related('author').filter(
-            is_published=True,
-            pub_date__lte=timezone.now(),
-            category__is_published=True
-        ).annotate(comment_count=Count('comments')
-                   ).order_by(*Post._meta.ordering)
-
-    if annotate is False:
-        if not filter_published:
-            return posts
-        return posts.filter(
-            is_published=True,
-            pub_date__lte=timezone.now()
         )
 
-    return posts.filter(
-        is_published=True,
-        pub_date__lte=timezone.now(),
-        category__is_published=True
-    ).annotate(comment_count=Count('comments')
-               ).order_by(*Post._meta.ordering)
+    if not filter_published:
+        posts = posts.select_related('author')
+
+    if annotate:
+        posts = posts.annotate(
+            comment_count=Count('comments')
+        ).order_by(*Post._meta.ordering)
+
+    if not annotate and not filter_published:
+        posts = posts
+
+    return posts
 
 
 class PostListView(ListView):
@@ -98,9 +78,17 @@ class PostDetailView(DetailView):
     pk_url_kwarg = 'post_id'
 
     def get_object(self, queryset=None):
-        post = super().get_object()
-        if not post.is_published and post.author != self.request.user:
-            raise Http404
+        post = get_object_or_404(get_posts(
+            filter_published=False,
+            annotate=False),
+            pk=self.kwargs[self.pk_url_kwarg])
+
+        if post.author != self.request.user:
+            return get_object_or_404(
+                get_posts(),
+                pk=self.kwargs[self.pk_url_kwarg]
+            )
+
         return post
 
     def get_context_data(self, **kwargs):
@@ -117,22 +105,18 @@ class CategoryListView(ListView):
     template_name = 'blog/category.html'
     slug_url_kwarg = 'category_slug'
 
-    def get_context_data(self, **kwargs):
-        return super().get_context_data(
-            category=get_object_or_404(
-                Post.category.get_queryset().filter(
-                    is_published=True,
-                    slug=self.kwargs['category_slug'])
-            )
+    def get_category(self):
+        return get_object_or_404(
+            Category,
+            slug=self.kwargs[self.slug_url_kwarg],
+            is_published=True
         )
 
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(category=self.get_category(), **kwargs)
+
     def get_queryset(self):
-        return get_posts(
-            posts=Post.category.get_queryset().filter(
-                slug=self.kwargs['category_slug']).first(
-            ).posts.get_queryset(),
-            filter_category=True
-        )
+        return get_posts(posts=self.get_category().posts)
 
 
 class CommentAddView(LoginRequiredMixin, CreateView):
@@ -142,10 +126,7 @@ class CommentAddView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        form.instance.post = get_object_or_404(
-            Comment.post.get_queryset(),
-            pk=self.kwargs['post_id']
-        )
+        form.instance.post = get_object_or_404(Post, pk=self.kwargs['post_id'])
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -159,9 +140,7 @@ class CommentEditView(LoginRequiredMixin, CommentMixin, UpdateView):
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             form=CreateCommentForm(instance=self.get_object()),
-            post=get_object_or_404(
-                Comment.post.get_queryset(),
-                pk=self.kwargs['post_id']),
+            post=get_object_or_404(Post, pk=self.kwargs['post_id']),
             **kwargs
         )
 
