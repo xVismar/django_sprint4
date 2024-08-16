@@ -153,9 +153,7 @@ class ProfileView(ListView):
         author = self.get_author()
         return get_posts(
             posts=author.posts,
-            filter_published=(
-                False if author.username == self.request.user.username
-                else True)
+            filter_published=True if author != self.request.user else False
         )
 
     def get_context_data(self, **kwargs):
