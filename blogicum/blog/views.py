@@ -15,7 +15,7 @@ PAGINATE_BY = 10
 
 
 def get_posts(
-    posts=Post.objects, get_related=False, filter_published=True, annotate=True
+    posts=Post.objects, get_related=True, filter_published=True, annotate=True
 ):
     if get_related:
         posts = posts.select_related('author', 'category', 'location')
@@ -38,7 +38,7 @@ class PostListView(ListView):
     template_name = 'blog/index.html'
 
     def get_queryset(self):
-        return get_posts(get_related=True)
+        return get_posts()
 
 
 class PostCreateView(LoginRequiredMixin, PostBaseMixin, CreateView):
@@ -75,7 +75,7 @@ class PostDetailView(DetailView):
         post = get_object_or_404(Post, pk=self.kwargs[self.pk_url_kwarg])
         if post.author != self.request.user:
             return get_object_or_404(
-                get_posts(annotate=False),
+                get_posts(annotate=False, get_related=False),
                 pk=self.kwargs[self.pk_url_kwarg]
             )
         return post
@@ -105,7 +105,7 @@ class CategoryListView(ListView):
         return super().get_context_data(category=self.get_category(), **kwargs)
 
     def get_queryset(self):
-        return get_posts(posts=self.get_category().posts, get_related=True)
+        return get_posts(posts=self.get_category().posts, )
 
 
 class CommentAddView(LoginRequiredMixin, CreateView):
@@ -151,15 +151,11 @@ class ProfileView(ListView):
         )
 
     def get_queryset(self):
-        author_posts = get_posts(
-            posts=self.get_author().posts,
-            get_related=True,
-            filter_published=False,
-            annotate=False
-        )
-        if self.request.user.username != self.get_author().username:
-            author_posts = get_posts(posts=author_posts)
-        return author_posts
+        author = self.get_author()
+
+        if self.request.user.username != author.username:
+            return get_posts(posts=author.posts.get_queryset())
+        return author.posts.get_queryset()
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
