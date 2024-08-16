@@ -140,22 +140,23 @@ class CommentDeleteView(CommentMixin, DeleteView):
 
 class ProfileView(ListView):
     template_name = 'blog/profile.html'
-    slug_url_kwarg = 'username'
     model = Post
     paginate_by = PAGINATE_BY
 
     def get_author(self):
         return get_object_or_404(
             User,
-            username=self.kwargs[self.slug_url_kwarg]
+            username=self.kwargs['username']
         )
 
     def get_queryset(self):
         author = self.get_author()
-
-        if self.request.user.username != author.username:
-            return get_posts(posts=author.posts.get_queryset())
-        return author.posts.get_queryset()
+        return get_posts(
+            posts=author.posts,
+            filter_published=(
+                False if author.username == self.request.user.username
+                else True)
+        )
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
